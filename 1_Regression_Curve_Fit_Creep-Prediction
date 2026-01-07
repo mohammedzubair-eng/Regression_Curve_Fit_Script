@@ -1,0 +1,58 @@
+# The Script creates regression fit curve data from physics-based simulation (Creep analysis) and predicts the most realstic values at desired time in years (30 years) 
+# This scripts predicts or extrpolate the data, which are well corelated with actual numerical simulation results
+# This pwoer law regresion fit curve is chosen (after testing various fit models) based on type of initial fit data (non-linear) and accuracy with numerical simulation  
+# output : X-Y graph image initial data (dotted line) with extrapolated curve 
+###################################################################################################
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+# Step 1: Define the power law model
+def power_law(x, a, b):
+    return a * np.power(x, b)
+
+# Step 2: Input your actual data
+X = np.array([
+    0.00E+00, 8.29E-10, 1.30E-07, 1.37E-05, 8.16E-04, 3.88E-02, 4.44E-01, 9.23E-01,
+    1.40E+00, 1.77E+00, 2.25E+00, 2.73E+00, 3.14E+00, 3.62E+00, 4.10E+00, 4.50E+00,
+    4.94E+00, 5.42E+00, 5.90E+00, 6.31E+00, 6.79E+00, 7.27E+00, 7.63E+00, 8.11E+00,
+    8.59E+00, 9.00E+00, 9.48E+00, 9.96E+00, 1.04E+01, 1.08E+01, 1.13E+01, 1.18E+01,
+    1.22E+01, 1.27E+01, 1.31E+01, 1.35E+01, 1.40E+01, 1.45E+01, 1.49E+01, 1.50E+01
+])
+
+Y = np.array([
+    0.000, 0.000, 0.003, 0.008, 0.018, 0.052, 0.128, 0.159, 0.178, 0.202,
+    0.230, 0.247, 0.262, 0.283, 0.297, 0.304, 0.326, 0.341, 0.353, 0.366,
+    0.380, 0.389, 0.397, 0.415, 0.426, 0.433, 0.449, 0.459, 0.466, 0.477,
+    0.490, 0.498, 0.506, 0.518, 0.525, 0.529, 0.543, 0.553, 0.559, 0.560
+])
+
+# Step 3: Filter out near-zero X values (since power law is undefined at 0)
+nonzero_indices = X > 0.01
+X_nonzero = X[nonzero_indices]
+Y_nonzero = Y[nonzero_indices]
+
+# Step 4: Fit the curve
+power_params, _ = curve_fit(power_law, X_nonzero, Y_nonzero, maxfev=5000)
+a_power, b_power = power_params
+
+# Step 5: Predict Y values up to X=30
+X_extrap = np.linspace(0.01, 30, 300)
+Y_power = power_law(X_extrap, a_power, b_power)
+
+# Step 6: Plot the data and the curve
+plt.figure(figsize=(10, 6))
+plt.scatter(X, Y, color='blue', label='Original Data')
+plt.plot(X_extrap, Y_power, color='green', label='Power Law Fit')
+plt.axvline(30, color='gray', linestyle='--', label='X = 30')
+plt.title('Power Law Regression Fit and Extrapolation')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# Step 7: Print predicted value at X = 30
+Y_at_30 = power_law(30, a_power, b_power)
+print(f"Predicted Y at X = 30: {Y_at_30:.3f}")
